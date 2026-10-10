@@ -43,7 +43,6 @@ from typing import Any
 
 from langchain_community.retrievers import BM25Retriever
 from langchain_postgres.vectorstores import PGVector
-from sentence_transformers import CrossEncoder as STCrossEncoder
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -106,15 +105,28 @@ _PROMPT = ChatPromptTemplate.from_messages(
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-_cross_encoder_instance: STCrossEncoder | None = None
+_cross_encoder_instance: Any = None
+_cross_encoder_failed: bool = False
 
 
-def _get_cross_encoder() -> STCrossEncoder:
+def _get_cross_encoder() -> Any:
     """Singleton getter for cross-encoder to avoid reloading model weights on each query."""
-    global _cross_encoder_instance
+    global _cross_encoder_instance, _cross_encoder_failed
+    if _cross_encoder_failed:
+        return None
     if _cross_encoder_instance is None:
-        logger.info("Loading cross-encoder model %s...", settings.rerank_model)
-        _cross_encoder_instance = STCrossEncoder(settings.rerank_model)
+        try:
+            from sentence_transformers import CrossEncoder
+            logger.info("Loading cross-encoder model %s...", settings.rerank_model)
+            _cross_encoder_instance = CrossEncoder(settings.rerank_model)
+        except Exception as exc:
+            logger.warning(
+                "Could not load cross-encoder (%s): %s. Falling back to dense cosine scoring.",
+                settings.rerank_model,
+                exc,
+            )
+            _cross_encoder_failed = True
+            return None
     return _cross_encoder_instance
 
 
@@ -326,11 +338,16 @@ def build_rag_chain(all_corpus_docs: list[Document] | None = None):
         """Score each (query, chunk) pair and return top_n sorted by score desc."""
         if not docs:
             return []
-        pairs = [(query, doc.page_content) for doc in docs]
-        scores: list[float] = _cross_encoder.predict(pairs).tolist()
-        for doc, score in zip(docs, scores):
-            doc.metadata["relevance_score"] = float(score)
-        ranked = sorted(docs, key=lambda d: d.metadata["relevance_score"], reverse=True)
+        if _cross_encoder is not None:
+            pairs = [(query, doc.page_content) for doc in docs]
+            scores: list[float] = _cross_encoder.predict(pairs).tolist()
+            for doc, score in zip(docs, scores):
+                doc.metadata["relevance_score"] = float(score)
+        else:
+            # Fallback: keep cosine score as relevance_score
+            for doc in docs:
+                doc.metadata["relevance_score"] = float(doc.metadata.get("score", 0.5))
+        ranked = sorted(docs, key=lambda d: d.metadata.get("relevance_score", 0.0), reverse=True)
         return ranked[: settings.rerank_top_n]
 
     # ── Dense retriever (HNSW cosine) ─────────────────────────────────────────

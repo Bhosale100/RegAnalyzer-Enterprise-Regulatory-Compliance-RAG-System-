@@ -9,21 +9,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system dependencies (curl for healthchecks, build tools if needed)
+# Install system dependencies (curl, build tools, and libgomp1 OpenMP required by PyTorch)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     build-essential \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install PyTorch CPU first to avoid heavy CUDA packages (~2GB savings)
-RUN pip install torch==2.5.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
-
-# Copy dependencies list and install
+# Copy dependencies and install CPU PyTorch followed by app requirements
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install torch==2.5.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu \
+    && pip install -r requirements.txt
 
 # Pre-download and cache fast, lightweight cross-encoder reranker weights (~80MB)
-# Fits within free tier memory limits and ensures instant container startup
 RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')" || true
 
 # Copy application source code and frontend
