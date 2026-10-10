@@ -121,10 +121,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS — restrict in production
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if settings.app_env == "development" else [],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

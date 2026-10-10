@@ -112,7 +112,7 @@ _cross_encoder_failed: bool = False
 def _get_cross_encoder() -> Any:
     """Singleton getter for cross-encoder to avoid reloading model weights on each query."""
     global _cross_encoder_instance, _cross_encoder_failed
-    if _cross_encoder_failed:
+    if not getattr(settings, "use_cross_encoder", False) or _cross_encoder_failed:
         return None
     if _cross_encoder_instance is None:
         try:

@@ -38,6 +38,8 @@ services:
         value: "768"
       - key: RERANK_MODEL
         value: cross-encoder/ms-marco-MiniLM-L-6-v2
+      - key: USE_CROSS_ENCODER
+        value: "false"
       - key: LLM_PRIMARY
         value: gemini-3.8-flash
       - key: LLM_FALLBACK_1
