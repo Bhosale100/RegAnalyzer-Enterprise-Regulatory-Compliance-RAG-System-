@@ -160,14 +160,29 @@ async def list_documents() -> DocumentListResponse:
 async def delete_document(document_id: str) -> None:
     try:
         async with AsyncSessionLocal() as session:
-            # Fetch the document to get file_name for chunk deletion
+            # Use raw SQL with explicit CAST to avoid UUID vs String mismatch
             result = await session.execute(
-                sa.select(documents_table).where(
-                    documents_table.c.id == document_id
-                )
+                sa.text(
+                    "SELECT id, file_name FROM documents WHERE id::text = :doc_id"
+                ),
+                {"doc_id": document_id},
             )
             row = result.mappings().first()
+
             if not row:
+                # Debug: log what IDs actually exist
+                all_docs = await session.execute(
+                    sa.text("SELECT id::text, file_name FROM documents")
+                )
+                existing = [
+                    {"id": r["id"], "file_name": r["file_name"]}
+                    for r in all_docs.mappings().all()
+                ]
+                logger.error(
+                    "Document '%s' not found. Existing docs: %s",
+                    document_id,
+                    existing,
+                )
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail=f"Document '{document_id}' not found.",
@@ -175,7 +190,7 @@ async def delete_document(document_id: str) -> None:
 
             file_name = row["file_name"]
 
-            # Delete chunks from pgvector via direct SQL (no embeddings needed)
+            # Delete chunks from pgvector
             try:
                 await session.execute(
                     sa.text(
@@ -189,9 +204,10 @@ async def delete_document(document_id: str) -> None:
             except Exception as exc:
                 logger.warning("Could not delete chunks for '%s': %s", file_name, exc)
 
-            # Delete the document record
+            # Delete the document record (also cast for safety)
             await session.execute(
-                documents_table.delete().where(documents_table.c.id == document_id)
+                sa.text("DELETE FROM documents WHERE id::text = :doc_id"),
+                {"doc_id": document_id},
             )
             await session.commit()
 
