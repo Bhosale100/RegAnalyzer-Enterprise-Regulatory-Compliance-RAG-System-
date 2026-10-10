@@ -2,7 +2,7 @@ services:
   - type: web
     name: erc-analyzer-web
     runtime: docker
-    plan: starter
+    plan: free
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
@@ -47,6 +47,6 @@ services:
 
 databases:
   - name: erc-postgres
-    plan: starter
+    plan: free
     databaseName: erc_analyzer
     user: postgres
