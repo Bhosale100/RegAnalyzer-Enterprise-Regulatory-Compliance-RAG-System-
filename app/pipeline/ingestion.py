@@ -99,12 +99,14 @@ async def ingest_document(
                 )
             )
             row = existing.mappings().first()
-        if row and row["status"] == "COMPLETED":
-            raise AlreadyIngestedError(
-                document_id=row["id"],
-                file_name=row["file_name"],
-            )
 
+    if row and row["status"] == "COMPLETED":
+        raise AlreadyIngestedError(
+            document_id=row["id"],
+            file_name=row["file_name"],
+        )
+
+    async with AsyncSessionLocal() as session:
         if row and row["status"] != "COMPLETED":
             # Re-use existing record ID if previous ingestion was aborted or failed
             doc_id = row["id"]
@@ -190,12 +192,16 @@ async def ingest_document(
         raise
     except Exception as exc:
         # Mark document as FAILED
-        async with AsyncSessionLocal() as session:
-            await session.execute(
-                documents_table.update()
-                .where(documents_table.c.id == doc_id)
-                .values(status="FAILED")
-            )
-            await session.commit()
+        if "doc_id" in locals() and doc_id:
+            try:
+                async with AsyncSessionLocal() as session:
+                    await session.execute(
+                        documents_table.update()
+                        .where(documents_table.c.id == doc_id)
+                        .values(status="FAILED")
+                    )
+                    await session.commit()
+            except Exception:
+                pass
         logger.exception("Ingestion FAILED for '%s'", file_name)
         raise IngestionError(file_name, str(exc)) from exc
