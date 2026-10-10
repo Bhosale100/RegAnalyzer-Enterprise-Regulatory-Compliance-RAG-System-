@@ -49,4 +49,4 @@ databases:
   - name: erc-postgres
     plan: free
     databaseName: erc_analyzer
-    user: postgres
+    user: erc_user
