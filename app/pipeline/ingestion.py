@@ -27,7 +27,7 @@ from langchain_postgres.vectorstores import PGVector
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.config import get_settings
-from app.db import AsyncSessionLocal, documents_table, engine
+from app.db import AsyncSessionLocal, documents_table, engine, init_db
 from app.exceptions import AlreadyIngestedError, IngestionError
 
 logger = logging.getLogger(__name__)
@@ -81,13 +81,24 @@ async def ingest_document(
     content_hash = _sha256(file_bytes)
     logger.info("Ingesting '%s' | hash=%s", file_name, content_hash[:16])
 
-    async with AsyncSessionLocal() as session:
-        existing = await session.execute(
-            sa.select(documents_table).where(
-                documents_table.c.content_hash == content_hash
+    try:
+        async with AsyncSessionLocal() as session:
+            existing = await session.execute(
+                sa.select(documents_table).where(
+                    documents_table.c.content_hash == content_hash
+                )
             )
-        )
-        row = existing.mappings().first()
+            row = existing.mappings().first()
+    except Exception:
+        # Auto-heal: Ensure table exists
+        await init_db()
+        async with AsyncSessionLocal() as session:
+            existing = await session.execute(
+                sa.select(documents_table).where(
+                    documents_table.c.content_hash == content_hash
+                )
+            )
+            row = existing.mappings().first()
         if row and row["status"] == "COMPLETED":
             raise AlreadyIngestedError(
                 document_id=row["id"],

@@ -119,13 +119,25 @@ async def ingest_endpoint(
     summary="List all ingested documents",
 )
 async def list_documents() -> DocumentListResponse:
-    async with AsyncSessionLocal() as session:
-        rows = await session.execute(
-            sa.select(documents_table).order_by(
-                documents_table.c.created_at.desc()
+    try:
+        async with AsyncSessionLocal() as session:
+            rows = await session.execute(
+                sa.select(documents_table).order_by(
+                    documents_table.c.created_at.desc()
+                )
             )
-        )
-        docs = rows.mappings().all()
+            docs = rows.mappings().all()
+    except Exception as exc:
+        logger.warning("Documents table query failed, attempting auto-heal init_db: %s", exc)
+        from app.db import init_db
+        await init_db()
+        async with AsyncSessionLocal() as session:
+            rows = await session.execute(
+                sa.select(documents_table).order_by(
+                    documents_table.c.created_at.desc()
+                )
+            )
+            docs = rows.mappings().all()
 
     items = [
         DocumentInfo(

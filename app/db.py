@@ -74,17 +74,21 @@ documents_table = sa.Table(
 
 async def init_db() -> None:
     """
-    Bootstrap sequence (idempotent):
-      1. Enable pgvector extension
-      2. Create our `documents` table
+    Bootstrap sequence (idempotent & resilient):
+      1. Enable pgvector extension (in its own transaction, non-fatal if managed/restricted)
+      2. Create our `documents` table (always runs)
       3. Add HNSW + GIN indexes on LangChain's embedding table (if it exists)
     """
-    async with engine.begin() as conn:
-        # pgvector extension — must exist before LangChain creates its table
-        await conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS vector"))
-        logger.info("pgvector extension ready")
+    # 1. pgvector extension — isolated transaction
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(sa.text("CREATE EXTENSION IF NOT EXISTS vector"))
+            logger.info("pgvector extension ready")
+    except Exception as exc:
+        logger.warning("Notice on CREATE EXTENSION vector: %s", exc)
 
-        # Our documents registry (explicit DDL + metadata create_all for idempotency)
+    # 2. Documents table — guaranteed execution
+    async with engine.begin() as conn:
         await conn.execute(
             sa.text(
                 """
@@ -103,11 +107,9 @@ async def init_db() -> None:
         await conn.run_sync(metadata.create_all)
         logger.info("documents table ready")
 
-        # HNSW index on LangChain's embedding table — created after LangChain
-        # initialises the table (PGVector.acreate_collection is called first in
-        # the lifespan).  We wrap in try/except so startup doesn't fail if the
-        # table doesn't exist yet on a fresh DB.
-        try:
+    # 3. HNSW + GIN indexes on LangChain's embedding table
+    try:
+        async with engine.begin() as conn:
             await conn.execute(
                 sa.text(
                     """
@@ -128,8 +130,8 @@ async def init_db() -> None:
                 )
             )
             logger.info("HNSW + GIN indexes ready on langchain_pg_embedding")
-        except Exception as exc:  # table may not exist on first boot
-            logger.debug("Index creation skipped (table may not exist yet): %s", exc)
+    except Exception as exc:
+        logger.debug("Index creation skipped (table may not exist yet): %s", exc)
 
 
 @asynccontextmanager
