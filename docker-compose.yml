@@ -1,0 +1,55 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: erc_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-erc_analyzer}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-erc_analyzer}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: erc_app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-erc_analyzer}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - APP_ENV=production
+      - LOG_LEVEL=INFO
+      - CHUNK_SIZE=1200
+      - CHUNK_OVERLAP=200
+      - DENSE_TOP_K=15
+      - SPARSE_TOP_K=15
+      - RERANK_TOP_N=6
+      - COSINE_FLOOR=0.50
+      - CROSS_ENCODER_FLOOR=0.0
+      - EMBEDDING_MODEL=models/gemini-embedding-001
+      - EMBEDDING_DIMENSION=768
+      - LLM_PRIMARY=gemini-3.8-flash
+      - LLM_FALLBACK_1=gemini-3.5-flash
+      - LLM_FALLBACK_2=gemini-flash-latest
+      - PGVECTOR_COLLECTION=erc_compliance_chunks
+
+volumes:
+  pgdata:

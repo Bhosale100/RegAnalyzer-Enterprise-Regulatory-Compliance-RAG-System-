@@ -1,0 +1,52 @@
+services:
+  - type: web
+    name: erc-analyzer-web
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: erc-postgres
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: erc-postgres
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: erc-postgres
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: erc-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: erc-postgres
+          property: password
+      - key: EMBEDDING_MODEL
+        value: models/gemini-embedding-001
+      - key: EMBEDDING_DIMENSION
+        value: "768"
+      - key: LLM_PRIMARY
+        value: gemini-3.8-flash
+      - key: LLM_FALLBACK_1
+        value: gemini-3.5-flash
+      - key: LLM_FALLBACK_2
+        value: gemini-flash-latest
+      - key: PGVECTOR_COLLECTION
+        value: erc_compliance_chunks
+
+databases:
+  - name: erc-postgres
+    plan: starter
+    databaseName: erc_analyzer
+    user: postgres

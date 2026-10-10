@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# HuggingFace model cache (cross-encoder weights, can be large)
+# Comment out if you want to cache between runs in the repo dir
+.cache/
+
+# Temp uploads
+tmp/
+*.tmp
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ERC Analyzer — Enterprise Regulatory Compliance Intelligence</title>
+  <meta name="description" content="Grounded Regulatory Intelligence with Hybrid Retrieval, Cross-Encoder Reranking, and Deterministic Anti-Hallucination Guards." />
+  
+  <!-- Modern Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚖️</text></svg>" />
+</head>
+<body>
+<div class="app-container">
+
+  <!-- ── Top Header / Enterprise Telemetry Bar ── -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <a class="brand-link" href="/">
+        <div class="brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">ERC Analyzer</span>
+          <span class="brand-badge">Enterprise RAG</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Live System Telemetry -->
+    <div class="nav-center">
+      <div class="telemetry-pill" id="telemetry-db" title="PostgreSQL + pgvector Status">
+        <span class="pulse-dot green" id="db-dot"></span>
+        <span class="telemetry-label">PostgreSQL:</span>
+        <span class="telemetry-val" id="db-val">Connected</span>
+      </div>
+
+      <div class="telemetry-pill" title="Primary LLM Model">
+        <span class="sparkle-icon">✨</span>
+        <span class="telemetry-label">Model:</span>
+        <span class="telemetry-val">Gemini 3.8 Flash</span>
+      </div>
+
+      <div class="telemetry-pill" title="3 Deterministic Anti-Hallucination Guards Active">
+        <span class="shield-icon">🛡️</span>
+        <span class="telemetry-label">Guards:</span>
+        <span class="telemetry-val highlight">3 Active</span>
+      </div>
+    </div>
+
+    <div class="nav-right">
+      <button class="action-btn text-btn" id="btn-clear-chat" title="Clear Conversation">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18m-2 0v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6m3 0V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        <span>Clear</span>
+      </button>
+      <a class="action-btn outline-btn" href="/docs" target="_blank" rel="noopener" title="Open FastAPI Interactive Swagger Documentation">
+        <span>Swagger API</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- ── Main Platform Workspace ── -->
+  <div class="workspace-grid">
+
+    <!-- ── Left Sidebar: Document Vault ── -->
+    <aside class="sidebar-vault">
+      <div class="vault-header">
+        <div class="vault-title-group">
+          <div class="vault-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div>
+            <h2 class="vault-title">Regulatory Vault</h2>
+            <p class="vault-subtitle">PostgreSQL vector corpus</p>
+          </div>
+        </div>
+        <div class="vault-badge" id="doc-count-badge">0 Docs</div>
+      </div>
+
+      <!-- Upload Zone -->
+      <div class="upload-card" id="upload-zone">
+        <input type="file" id="upload-input" accept=".pdf" multiple />
+        <div class="upload-icon-container">
+          <svg class="upload-svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-title">Drop PDF Directives Here</div>
+        <div class="upload-instruction">or click to browse from device</div>
+        <div class="upload-tags">
+          <span class="file-tag">PDF</span>
+          <span class="file-tag">Max 50MB</span>
+          <span class="file-tag">Auto SHA-256</span>
+        </div>
+      </div>
+
+      <!-- Upload Progress Feedback -->
+      <div class="upload-progress-card" id="upload-progress">
+        <div class="progress-info">
+          <span class="progress-title" id="progress-filename">Uploading document…</span>
+          <span class="progress-pct" id="progress-pct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar-glow" id="progress-fill"></div>
+        </div>
+        <div class="progress-stage" id="progress-stage">Initializing pipeline…</div>
+      </div>
+
+      <!-- Document Scope Filter Controller -->
+      <div class="scope-controller" id="scope-controller">
+        <div class="scope-header">
+          <span class="scope-title">Corpus Filtering</span>
+          <button class="scope-clear-btn" id="scope-clear-btn" style="display:none;" onclick="clearDocSelection()">Clear Filter</button>
+        </div>
+        <div class="scope-summary" id="scope-summary">
+          Querying entire vault (all documents)
+        </div>
+      </div>
+
+      <!-- Document List Container -->
+      <div class="doc-vault-list" id="doc-list">
+        <div class="vault-empty-state">
+          <div class="empty-icon-wrap">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+          </div>
+          <h4>No Documents Ingested</h4>
+          <p>Upload official regulatory PDFs (GDPR, EU AI Act, HIPAA, SOC2) to start asking compliance questions.</p>
+        </div>
+      </div>
+
+      <!-- Vault Footer Stats -->
+      <div class="vault-footer">
+        <div class="vault-stat">
+          <span class="stat-dot"></span>
+          <span>HNSW Cosine Vector Index Ready</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── Right Main Workspace: Compliance Chat ── -->
+    <main class="chat-workspace">
+
+      <!-- Active Filter Banner (Visible when documents are selected) -->
+      <div class="filter-active-banner" id="filter-active-banner" style="display:none;">
+        <div class="filter-banner-content">
+          <span class="filter-icon">🔍</span>
+          <span class="filter-text">Scoping retrieval to <strong id="filter-doc-count">0</strong> selected document(s)</span>
+        </div>
+        <button class="filter-reset-link" onclick="clearDocSelection()">Reset to All</button>
+      </div>
+
+      <!-- Chat History Stream -->
+      <div class="chat-stream" id="chat-area">
+
+        <!-- Welcome Hero State -->
+        <div class="welcome-hero" id="welcome-state">
+          <div class="hero-badge">
+            <span class="sparkle">✦</span>
+            <span>ENTERPRISE REGULATORY INTELLIGENCE</span>
+          </div>
+
+          <h1 class="hero-title">
+            Strictly Grounded <br />
+            <span class="text-gradient">Compliance Engine</span>
+          </h1>
+
+          <p class="hero-description">
+            Submit regulatory questions across ingested directives, acts, and audit standards.
+            Every answer is strictly grounded with <strong>page-level citations</strong>, verified through 
+            <strong>BGE cross-encoder reranking</strong> and <strong>deterministic anti-hallucination guards</strong>.
+          </p>
+
+          <!-- Guard Architecture Pillars -->
+          <div class="guard-pillars">
+            <div class="pillar-card">
+              <div class="pillar-num">01</div>
+              <div class="pillar-content">
+                <strong>Cosine Floor Guard</strong>
+                <p>Enforces ≥0.50 vector similarity floor or verified BM25 sparse hit.</p>
+              </div>
+            </div>
+            <div class="pillar-card">
+              <div class="pillar-num">02</div>
+              <div class="pillar-content">
+                <strong>Cross-Encoder Guard</strong>
+                <p>Scores query-chunk pairs via BAAI/bge-reranker-v2-m3 with ≥0.0 threshold.</p>
+              </div>
+            </div>
+            <div class="pillar-card">
+              <div class="pillar-num">03</div>
+              <div class="pillar-content">
+                <strong>Citation Verification</strong>
+                <p>Rejects any answer without valid citations matching retrieved excerpts.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Suggestion Starter Queries -->
+          <div class="suggestions-container">
+            <div class="suggestions-header">
+              <span class="sugg-icon">⚡</span>
+              <span>Common Compliance Queries</span>
+            </div>
+            <div class="suggestions-grid">
+              <button class="sugg-card" onclick="useSuggestion('What are the lawful bases for processing personal data under this regulation?')">
+                <span class="sugg-tag privacy">Data Privacy</span>
+                <span class="sugg-text">What are the lawful bases for processing personal data?</span>
+                <span class="sugg-arrow">→</span>
+              </button>
+
+              <button class="sugg-card" onclick="useSuggestion('What are the mandatory data breach notification requirements and deadlines?')">
+                <span class="sugg-tag security">Breach Protocol</span>
+                <span class="sugg-text">What are the mandatory data breach notification deadlines?</span>
+                <span class="sugg-arrow">→</span>
+              </button>
+
+              <button class="sugg-card" onclick="useSuggestion('What are the statutory requirements and obligations for data processors?')">
+                <span class="sugg-tag governance">Obligations</span>
+                <span class="sugg-text">What are the statutory obligations for data processors?</span>
+                <span class="sugg-arrow">→</span>
+              </button>
+
+              <button class="sugg-card" onclick="useSuggestion('What penalties and administrative fines can be imposed for non-compliance?')">
+                <span class="sugg-tag audit">Penalties</span>
+                <span class="sugg-text">What penalties and fines are imposed for non-compliance?</span>
+                <span class="sugg-arrow">→</span>
+              </button>
+
+              <button class="sugg-card" onclick="useSuggestion('What specific rights are granted to data subjects regarding erasure and portability?')">
+                <span class="sugg-tag rights">Subject Rights</span>
+                <span class="sugg-text">What specific rights are granted regarding erasure and portability?</span>
+                <span class="sugg-arrow">→</span>
+              </button>
+
+              <button class="sugg-card" onclick="useSuggestion('Summarise the primary controller accountability obligations and record-keeping mandates.')">
+                <span class="sugg-tag summary">Executive Summary</span>
+                <span class="sugg-text">Summarise primary controller accountability obligations.</span>
+                <span class="sugg-arrow">→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Floating Prompt Command Bar -->
+      <div class="prompt-bar-wrapper">
+        <div class="prompt-box">
+          <div class="prompt-input-row">
+            <textarea
+              id="query-input"
+              class="prompt-textarea"
+              rows="1"
+              placeholder="Ask a compliance question across your regulatory documents… (↵ Enter to send, Shift+↵ for new line)"
+            ></textarea>
+            
+            <button class="send-trigger" id="send-btn" disabled title="Send compliance question">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="prompt-meta-row">
+            <div class="prompt-meta-left">
+              <span class="assurance-tag">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Strictly Grounded
+              </span>
+              <span class="assurance-divider">•</span>
+              <span class="assurance-tag">Page-Level Citations</span>
+              <span class="assurance-divider">•</span>
+              <span class="assurance-tag">BGE Reranked</span>
+            </div>
+            <div class="prompt-meta-right">
+              <span class="shortcut-hint"><kbd>Enter</kbd> to submit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-stack" id="toast-container"></div>
+
+<script src="/assets/app.js"></script>
+</body>
+</html>

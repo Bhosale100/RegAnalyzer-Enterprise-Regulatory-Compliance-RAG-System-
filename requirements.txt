@@ -1,0 +1,41 @@
+# ── Core Framework ──────────────────────────────────────────────────────────────
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+python-multipart>=0.0.12
+
+# ── LangChain Stack ─────────────────────────────────────────────────────────────
+# Use latest langchain-postgres (0.0.18) which pulls compatible langchain-core
+langchain-postgres==0.0.18
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-google-genai>=2.0.0
+
+# ── Embeddings / LLM ────────────────────────────────────────────────────────────
+google-generativeai>=0.8.0
+
+# ── PDF Parsing ─────────────────────────────────────────────────────────────────
+pypdf>=5.1.0
+
+# ── Chunking (tiktoken-aware) ───────────────────────────────────────────────────
+tiktoken>=0.8.0
+langchain-text-splitters>=0.3.0
+
+# ── Cross-Encoder Re-ranking ────────────────────────────────────────────────────
+sentence-transformers>=3.0.0
+# torch installed separately: .venv\Scripts\python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# ── BM25 ────────────────────────────────────────────────────────────────────────
+rank-bm25>=0.2.2
+
+# ── PostgreSQL / pgvector ───────────────────────────────────────────────────────
+psycopg[binary,pool]>=3.1.0
+# pgvector pulled transitively by langchain-postgres (>=0.2.5,<0.4)
+
+# ── Data / Utilities ─────────────────────────────────────────────────────────────
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+python-dotenv>=1.0.0
+
+# ── Testing ──────────────────────────────────────────────────────────────────────
+pytest>=8.0.0
+pytest-asyncio>=0.24.0
