@@ -113,8 +113,8 @@ def _get_cross_encoder() -> STCrossEncoder:
     """Singleton getter for cross-encoder to avoid reloading model weights on each query."""
     global _cross_encoder_instance
     if _cross_encoder_instance is None:
-        logger.info("Loading cross-encoder model BAAI/bge-reranker-v2-m3...")
-        _cross_encoder_instance = STCrossEncoder("BAAI/bge-reranker-v2-m3")
+        logger.info("Loading cross-encoder model %s...", settings.rerank_model)
+        _cross_encoder_instance = STCrossEncoder(settings.rerank_model)
     return _cross_encoder_instance
 
 

@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     dense_top_k: int = 15
     sparse_top_k: int = 15
     rerank_top_n: int = 6
+    rerank_model: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     cosine_floor: float = 0.50
     cross_encoder_floor: float = 0.0
     embedding_model: str = "models/gemini-embedding-001"

@@ -22,9 +22,9 @@ RUN pip install torch==2.5.1+cpu --extra-index-url https://download.pytorch.org/
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Pre-download and cache cross-encoder reranker weights during build
-# This ensures container starts immediately without Hugging Face download delay in runtime
-RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('BAAI/bge-reranker-v2-m3')" || true
+# Pre-download and cache fast, lightweight cross-encoder reranker weights (~80MB)
+# Fits within free tier memory limits and ensures instant container startup
+RUN python -c "from sentence_transformers import CrossEncoder; CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')" || true
 
 # Copy application source code and frontend
 COPY . .
@@ -32,9 +32,5 @@ COPY . .
 # Expose default port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
-
-# Start Uvicorn server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start server using run.py which dynamically binds to Render's $PORT
+CMD ["python", "run.py"]
