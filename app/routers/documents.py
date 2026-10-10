@@ -15,8 +15,6 @@ from pathlib import Path
 
 import sqlalchemy as sa
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
-from langchain_postgres.vectorstores import PGVector
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
 from app.config import get_settings
 from app.db import AsyncSessionLocal, documents_table
@@ -160,52 +158,51 @@ async def list_documents() -> DocumentListResponse:
     summary="Delete a document and its chunks",
 )
 async def delete_document(document_id: str) -> None:
-    async with AsyncSessionLocal() as session:
-        # Fetch the document to get file_name for chunk deletion
-        result = await session.execute(
-            sa.select(documents_table).where(
-                documents_table.c.id == document_id
+    try:
+        async with AsyncSessionLocal() as session:
+            # Fetch the document to get file_name for chunk deletion
+            result = await session.execute(
+                sa.select(documents_table).where(
+                    documents_table.c.id == document_id
+                )
             )
-        )
-        row = result.mappings().first()
-        if not row:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Document '{document_id}' not found.",
-            )
+            row = result.mappings().first()
+            if not row:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Document '{document_id}' not found.",
+                )
 
-        file_name = row["file_name"]
+            file_name = row["file_name"]
 
-        # Delete chunks from pgvector via LangChain
-        try:
-            embeddings = GoogleGenerativeAIEmbeddings(
-                model=settings.embedding_model,
-                google_api_key=settings.google_api_key,
-            )
-            vs = PGVector(
-                collection_name=settings.pgvector_collection,
-                connection=settings.postgres_dsn,
-                embeddings=embeddings,
-                use_jsonb=True,
-            )
-            # PGVector doesn't have a bulk-delete-by-metadata method, so we
-            # delete directly via SQL for efficiency.
+            # Delete chunks from pgvector via direct SQL (no embeddings needed)
+            try:
+                await session.execute(
+                    sa.text(
+                        """
+                        DELETE FROM langchain_pg_embedding
+                        WHERE cmetadata->>'source' = :source
+                        """
+                    ),
+                    {"source": file_name},
+                )
+            except Exception as exc:
+                logger.warning("Could not delete chunks for '%s': %s", file_name, exc)
+
+            # Delete the document record
             await session.execute(
-                sa.text(
-                    """
-                    DELETE FROM langchain_pg_embedding
-                    WHERE cmetadata->>'source' = :source
-                    """
-                ),
-                {"source": file_name},
+                documents_table.delete().where(documents_table.c.id == document_id)
             )
-        except Exception as exc:
-            logger.warning("Could not delete chunks for '%s': %s", file_name, exc)
+            await session.commit()
 
-        # Delete the document record
-        await session.execute(
-            documents_table.delete().where(documents_table.c.id == document_id)
-        )
-        await session.commit()
+        logger.info("Deleted document '%s' (id=%s)", file_name, document_id)
 
-    logger.info("Deleted document '%s' (id=%s)", file_name, document_id)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Delete failed for document_id=%s: %s", document_id, exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to delete document: {exc}",
+        ) from exc
+
